@@ -18,16 +18,11 @@ var base64url = require('base64url'),
 
 var packageJson = require('../package'),
     serve_font = require('./serve_font'),
-    serve_rendered = null,
     serve_style = require('./serve_style'),
     serve_data = require('./serve_data'),
     utils = require('./utils');
 
 var isLight = packageJson.name.slice(-6) == '-light';
-if (!isLight) {
-  // do not require `serve_rendered` in the light package
-  serve_rendered = require('./serve_rendered');
-}
 
 function start(opts) {
   console.log('Starting server');
@@ -142,27 +137,7 @@ function start(opts) {
           app.use('/styles/', sub);
         }));
     }
-    if (item.serve_rendered !== false) {
-      if (serve_rendered) {
-        startupPromises.push(
-          serve_rendered(options, serving.rendered, item, id,
-            function(mbtiles) {
-              var mbtilesFile;
-              Object.keys(data).forEach(function(id) {
-                if (id == mbtiles) {
-                  mbtilesFile = data[id].mbtiles;
-                }
-              });
-              return mbtilesFile;
-            }
-          ).then(function(sub) {
-            app.use('/styles/', sub);
-          })
-        );
-      } else {
-        item.serve_rendered = false;
-      }
-    }
+
   });
 
   startupPromises.push(
