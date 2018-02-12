@@ -1,0 +1,13 @@
+[Unit]
+Description=Local Map Server
+
+[Service]
+ExecStart=tileserver-gl-light @@BASEDIR@@/@@MAP@@
+WorkingDirectory=@@BASEDIR@@
+Restart=always
+RestartSec=10s
+StandardOutput=syslog
+StandardError=syslog
+
+[Install]
+WantedBy=multi-user.target
