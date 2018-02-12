@@ -5,10 +5,10 @@ BASEDIR = $(CURDIR)
 all: install-systemd install-tileserver install-systemd
 
 install-node:
-	install-node.sh
+	bash -c ./install-node.sh
 
 install-tileserver:
-	install-tileserver.sh
+	bash -c ./install-tileserver.sh
 
 install-systemd:
 	install -D tileserver.service /etc/systemd/system/tileserver.service
