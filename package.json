@@ -1,0 +1,22 @@
+{
+  "name": "tileserver",
+  "version": "1.0.0",
+  "description": "package for map server",
+  "main": "index.js",
+  "scripts": {
+    "start": "tileserver-gl-light"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vladmashtak/install-mapserver.git"
+  },
+  "author": "Vlad Mashtak",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/vladmashtak/install-mapserver/issues"
+  },
+  "homepage": "https://github.com/vladmashtak/install-mapserver#readme",
+  "dependencies": {
+    "tileserver-gl-light": "^2.3.1"
+  }
+}

@@ -2,12 +2,15 @@ BASEDIR = $(CURDIR)
 
 .PHONY: all
 
-all: install-systemd
+all: install-systemd install-tileserver install-systemd
 
 install-node:
 	install-node.sh
 
-install-systemd:
-	install -D tileserver.service $(BASEDIR)/etc/systemd/system/tileserver.service
+install-tileserver: install-node
+	install-tileserver.sh
+
+install-systemd: install-node
+	install -D tileserver.service /etc/systemd/system/tileserver.service
 	sed 's/@@MAP@@/$(map)/g;s#@@BASEDIR@@#$(BASEDIR)#g' -i \
-		$(BASEDIR)/etc/systemd/system/tileserver.service
+		/etc/systemd/system/tileserver.service

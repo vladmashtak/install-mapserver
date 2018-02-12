@@ -8,5 +8,3 @@ curl http://nodejs.org/dist/node-latest.tar.gz | tar xz --strip-components=1
 ./configure --prefix=$HOME/local
 make install
 curl -L https://www.npmjs.com/install.sh | sh
-
-npm install -g tileserver-gl-light
