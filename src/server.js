@@ -237,6 +237,9 @@ function start(opts) {
       address = '[' + address + ']'; // literal IPv6 address
     }
     console.log('Listening at http://%s:%d/', address, this.address().port);
+
+    if (!!opts.prefix)
+      console.log('Prefix: ', opts.prefix);
   });
 
   // add server.shutdown() to gracefully stop serving
