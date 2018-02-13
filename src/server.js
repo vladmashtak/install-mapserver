@@ -35,7 +35,7 @@ function start(opts) {
         fonts: {}
       };
 
-  app.enable('trust proxy');
+  app.enable('trust proxy', 'map');
 
   if (process.env.NODE_ENV == 'production') {
     app.use(morgan('tiny'));
