@@ -12,5 +12,5 @@ install-tileserver:
 
 install-systemd:
 	install -D tileserver.service /etc/systemd/system/tileserver.service
-	sed 's/@@MAP@@/$(map)/g;s/@@PORT@@/$(port)/g;s#@@PREFIX@@s#$(prefix)#g;s#@@BASEDIR@@#$(BASEDIR)#g' -i \
+	sed 's/@@MAP@@/$(map)/g;s/@@PORT@@/$(port)/g;s/@@PREFIX@@/$(prefix)/g;s#@@BASEDIR@@#$(BASEDIR)#g' -i \
 		/etc/systemd/system/tileserver.service
