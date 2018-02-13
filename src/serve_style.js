@@ -7,7 +7,7 @@ var clone = require('clone'),
     express = require('express');
 
 
-module.exports = function(options, repo, params, id, reportTiles, reportFont) {
+module.exports = function(options, repo, params, id, reportTiles, reportFont, prefix) {
   var app = express().disable('x-powered-by');
 
   var styleFile = path.resolve(options.paths.styles, params.style);
@@ -78,8 +78,12 @@ module.exports = function(options, repo, params, id, reportTiles, reportFont) {
       if (queryParams.length) {
         query = '?' + queryParams.join('&');
       }
-      return url.replace(
-          'local://', req.protocol + '://' + req.headers.host + '/') + query;
+
+      if (!!prefix) {
+          return url.replace('local://', req.protocol + '://' + req.headers.host + prefix + '/') + query;
+      }
+
+      return url.replace('local://', req.protocol + '://' + req.headers.host + '/') + query;
     };
 
     var styleJSON_ = clone(styleJSON);

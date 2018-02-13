@@ -1,7 +1,6 @@
 'use strict';
 
-var clone = require('clone'),
-    express = require('express'),
+var express = require('express'),
     fs = require('fs'),
     path = require('path');
 

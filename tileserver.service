@@ -2,7 +2,7 @@
 Description=Local Map Server
 
 [Service]
-ExecStart=/usr/bin/node @@BASEDIR@@/src/main.js @@BASEDIR@@/@@MAP@@ --port=@@PORT@@
+ExecStart=/usr/bin/node @@BASEDIR@@/src/main.js @@BASEDIR@@/@@MAP@@ --port=@@PORT@@ --prefix=@@PREFIX@@
 WorkingDirectory=@@BASEDIR@@
 Restart=always
 RestartSec=10s

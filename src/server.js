@@ -35,7 +35,9 @@ function start(opts) {
         fonts: {}
       };
 
-  app.enable('trust proxy', 'map');
+  var router = express.Router();
+
+  app.enable('trust proxy');
 
   if (process.env.NODE_ENV == 'production') {
     app.use(morgan('tiny'));
@@ -92,9 +94,7 @@ function start(opts) {
 
   var data = clone(config.data || {});
 
-  if (opts.cors) {
-    app.use(cors());
-  }
+  app.use(cors());
 
   Object.keys(config.styles || {}).forEach(function(id) {
     var item = config.styles[id];
@@ -133,8 +133,8 @@ function start(opts) {
           }
         }, function(font) {
           serving.fonts[font] = true;
-        }).then(function(sub) {
-          app.use('/styles/', sub);
+        }, opts.prefix).then(function(sub) {
+          router.use('/styles/', sub);
         }));
     }
 
@@ -142,7 +142,7 @@ function start(opts) {
 
   startupPromises.push(
     serve_font(options, serving.fonts).then(function(sub) {
-      app.use('/', sub);
+      router.use('/', sub);
     })
   );
 
@@ -154,23 +154,30 @@ function start(opts) {
     }
 
     startupPromises.push(
-      serve_data(options, serving.data, item, id, serving.styles).then(function(sub) {
-        app.use('/data/', sub);
+      serve_data(options, serving.data, item, id, serving.styles, opts.prefix).then(function(sub) {
+        router.use('/data/', sub);
       })
     );
   });
 
-  app.get('/styles.json', function(req, res, next) {
+  router.get('/styles.json', function(req, res, next) {
     var result = [];
     var query = req.query.key ? ('?key=' + req.query.key) : '';
     Object.keys(serving.styles).forEach(function(id) {
-      var styleJSON = serving.styles[id];
+      var styleJSON = serving.styles[id],
+          styleUrl;
+
+        if (!!opts.prefix ) {
+          styleUrl = req.protocol + '://' + req.headers.host + opts.prefix + '/styles/' + id + '/style.json' + query;
+        } else {
+          styleUrl = req.protocol + '://' + req.headers.host + '/styles/' + id + '/style.json' + query;
+        }
+
       result.push({
         version: styleJSON.version,
         name: styleJSON.name,
         id: id,
-        url: req.protocol + '://' + req.headers.host +
-             '/styles/' + id + '/style.json' + query
+        url: styleUrl
       });
     });
     res.send(result);
@@ -185,190 +192,44 @@ function start(opts) {
       } else {
         path = type + '/' + id;
       }
-      info.tiles = utils.getTileUrls(req, info.tiles, path, info.format, {
-        'pbf': options.pbfAlias
-      });
+      info.tiles = utils.getTileUrls(req, info.tiles, path, info.format, {'pbf': options.pbfAlias}, opts.prefix);
       arr.push(info);
     });
     return arr;
   };
 
-  app.get('/rendered.json', function(req, res, next) {
+  router.get('/rendered.json', function(req, res, next) {
     res.send(addTileJSONs([], req, 'rendered'));
   });
-  app.get('/data.json', function(req, res, next) {
+  router.get('/data.json', function(req, res, next) {
     res.send(addTileJSONs([], req, 'data'));
   });
-  app.get('/index.json', function(req, res, next) {
+  router.get('/index.json', function(req, res, next) {
     res.send(addTileJSONs(addTileJSONs([], req, 'rendered'), req, 'data'));
   });
 
   //------------------------------------
   // serve web presentations
-  app.use('/', express.static(path.join(__dirname, '../public/resources')));
-
-  var templates = path.join(__dirname, '../public/templates');
-  var serveTemplate = function(urlPath, template, dataGetter) {
-    var templateFile = templates + '/' + template + '.tmpl';
-    if (template == 'index') {
-      if (options.frontPage === false) {
-        return;
-      } else if (options.frontPage &&
-                 options.frontPage.constructor === String) {
-        templateFile = path.resolve(paths.root, options.frontPage);
-      }
-    }
-    startupPromises.push(new Promise(function(resolve, reject) {
-      fs.readFile(templateFile, function(err, content) {
-        if (err) {
-          err = new Error('Template not found: ' + err.message);
-          reject(err);
-          return;
-        }
-        var compiled = handlebars.compile(content.toString());
-
-        app.use(urlPath, function(req, res, next) {
-          var data = {};
-          if (dataGetter) {
-            data = dataGetter(req);
-            if (!data) {
-              return res.status(404).send('Not found');
-            }
-          }
-          data['server_version'] = packageJson.name + ' v' + packageJson.version;
-          data['is_light'] = isLight;
-          data['key_query_part'] =
-              req.query.key ? 'key=' + req.query.key + '&amp;' : '';
-          data['key_query'] = req.query.key ? '?key=' + req.query.key : '';
-          return res.status(200).send(compiled(data));
-        });
-        resolve();
-      });
-    }));
-  };
-
-  serveTemplate('/$', 'index', function(req) {
-    var styles = clone(config.styles || {});
-    Object.keys(styles).forEach(function(id) {
-      var style = styles[id];
-      style.name = (serving.styles[id] || serving.rendered[id] || {}).name;
-      style.serving_data = serving.styles[id];
-      style.serving_rendered = serving.rendered[id];
-      if (style.serving_rendered) {
-        var center = style.serving_rendered.center;
-        if (center) {
-          style.viewer_hash = '#' + center[2] + '/' +
-                              center[1].toFixed(5) + '/' +
-                              center[0].toFixed(5);
-
-          var centerPx = mercator.px([center[0], center[1]], center[2]);
-          style.thumbnail = center[2] + '/' +
-              Math.floor(centerPx[0] / 256) + '/' +
-              Math.floor(centerPx[1] / 256) + '.png';
-        }
-
-        var query = req.query.key ? ('?key=' + req.query.key) : '';
-        style.wmts_link = 'http://wmts.maptiler.com/' +
-          base64url('http://' + req.headers.host +
-            '/styles/' + id + '.json' + query) + '/wmts';
-
-        var tiles = utils.getTileUrls(
-            req, style.serving_rendered.tiles,
-            'styles/' + id, style.serving_rendered.format);
-        style.xyz_link = tiles[0];
-      }
-    });
-    var data = clone(serving.data || {});
-    Object.keys(data).forEach(function(id) {
-      var data_ = data[id];
-      var center = data_.center;
-      if (center) {
-        data_.viewer_hash = '#' + center[2] + '/' +
-                            center[1].toFixed(5) + '/' +
-                            center[0].toFixed(5);
-      }
-      data_.is_vector = data_.format == 'pbf';
-      if (!data_.is_vector) {
-        if (center) {
-          var centerPx = mercator.px([center[0], center[1]], center[2]);
-          data_.thumbnail = center[2] + '/' +
-              Math.floor(centerPx[0] / 256) + '/' +
-              Math.floor(centerPx[1] / 256) + '.' + data_.format;
-        }
-
-        var query = req.query.key ? ('?key=' + req.query.key) : '';
-        data_.wmts_link = 'http://wmts.maptiler.com/' +
-          base64url('http://' + req.headers.host +
-            '/data/' + id + '.json' + query) + '/wmts';
-
-        var tiles = utils.getTileUrls(
-            req, data_.tiles, 'data/' + id, data_.format, {
-              'pbf': options.pbfAlias
-            });
-        data_.xyz_link = tiles[0];
-      }
-      if (data_.filesize) {
-        var suffix = 'kB';
-        var size = parseInt(data_.filesize, 10) / 1024;
-        if (size > 1024) {
-          suffix = 'MB';
-          size /= 1024;
-        }
-        if (size > 1024) {
-          suffix = 'GB';
-          size /= 1024;
-        }
-        data_.formatted_filesize = size.toFixed(2) + ' ' + suffix;
-      }
-    });
-    return {
-      styles: Object.keys(styles).length ? styles : null,
-      data: Object.keys(data).length ? data : null
-    };
-  });
-
-  serveTemplate('/styles/:id/$', 'viewer', function(req) {
-    var id = req.params.id;
-    var style = clone((config.styles || {})[id]);
-    if (!style) {
-      return null;
-    }
-    style.id = id;
-    style.name = (serving.styles[id] || serving.rendered[id]).name;
-    style.serving_data = serving.styles[id];
-    style.serving_rendered = serving.rendered[id];
-    return style;
-  });
-
-  /*
-  app.use('/rendered/:id/$', function(req, res, next) {
-    return res.redirect(301, '/styles/' + req.params.id + '/');
-  });
-  */
-
-  serveTemplate('/data/:id/$', 'data', function(req) {
-    var id = req.params.id;
-    var data = clone(serving.data[id]);
-    if (!data) {
-      return null;
-    }
-    data.id = id;
-    data.is_vector = data.format == 'pbf';
-    return data;
-  });
+  router.use('/', express.static(path.join(__dirname, '../public/resources')));
 
   var startupComplete = false;
   var startupPromise = Promise.all(startupPromises).then(function() {
     console.log('Startup complete');
     startupComplete = true;
   });
-  app.get('/health', function(req, res, next) {
+  router.get('/health', function(req, res, next) {
     if (startupComplete) {
       return res.status(200).send('OK');
     } else {
       return res.status(503).send('Starting');
     }
   });
+
+  if (!!opts.prefix) {
+    app.use(opts.prefix, router);
+  } else {
+    app.use(router);
+  }
 
   var server = app.listen(process.env.PORT || opts.port, process.env.BIND || opts.bind, function() {
     var address = this.address().address;
