@@ -34,7 +34,7 @@ var opts = require('nomnom')
   })
   .option('protocol', {
       abbr: 'prot',
-      default: 'https://',
+      default: 'https',
       help: 'Protocol'
   })
   .option('prefix', {
