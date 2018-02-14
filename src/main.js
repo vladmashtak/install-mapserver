@@ -35,6 +35,9 @@ var opts = require('nomnom')
   .option('prefix', {
     abbr: 'pr',
     default: undefined,
+    transform: function (prefix) {
+        return !!prefix ? '/' + prefix : prefix;
+    },
     help: 'Prefix for proxy'
   })
   .option('verbose', {
@@ -60,7 +63,7 @@ var startServer = function(configPath, config) {
     config: config,
     bind: opts.bind,
     port: opts.port,
-    prefix: !!opts.prefix ? '/' + opts.prefix : opts.prefix
+    prefix: opts.prefix
   });
 };
 
