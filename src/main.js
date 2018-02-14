@@ -32,6 +32,11 @@ var opts = require('nomnom')
     default: 8080,
     help: 'Port'
   })
+  .option('protocol', {
+      abbr: 'prot',
+      default: 'https://',
+      help: 'Protocol'
+  })
   .option('prefix', {
     abbr: 'pr',
     default: undefined,
@@ -63,7 +68,8 @@ var startServer = function(configPath, config) {
     config: config,
     bind: opts.bind,
     port: opts.port,
-    prefix: opts.prefix
+    prefix: opts.prefix,
+    protocol: opts.protocol
   });
 };
 

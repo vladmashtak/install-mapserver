@@ -133,7 +133,7 @@ function start(opts) {
           }
         }, function(font) {
           serving.fonts[font] = true;
-        }, opts.prefix).then(function(sub) {
+        }, opts.prefix, opts.protocol).then(function(sub) {
           router.use('/styles/', sub);
         }));
     }
@@ -154,14 +154,13 @@ function start(opts) {
     }
 
     startupPromises.push(
-      serve_data(options, serving.data, item, id, serving.styles, opts.prefix).then(function(sub) {
+      serve_data(options, serving.data, item, id, serving.styles, opts.prefix, opts.protocol).then(function(sub) {
         router.use('/data/', sub);
       })
     );
   });
 
   router.get('/styles.json', function(req, res, next) {
-    var protocol = req.connection.encrypted ? 'https://' : 'http://';
     var result = [];
     var query = req.query.key ? ('?key=' + req.query.key) : '';
     Object.keys(serving.styles).forEach(function(id) {
@@ -169,9 +168,9 @@ function start(opts) {
           styleUrl;
 
         if (!!opts.prefix ) {
-          styleUrl = protocol + req.headers.host + opts.prefix + '/styles/' + id + '/style.json' + query;
+          styleUrl = opts.protocol + '://' + req.headers.host + opts.prefix + '/styles/' + id + '/style.json' + query;
         } else {
-          styleUrl = protocol + req.headers.host + '/styles/' + id + '/style.json' + query;
+          styleUrl = opts.protocol + '://' + req.headers.host + '/styles/' + id + '/style.json' + query;
         }
 
       result.push({
@@ -193,7 +192,7 @@ function start(opts) {
       } else {
         path = type + '/' + id;
       }
-      info.tiles = utils.getTileUrls(req, info.tiles, path, info.format, {'pbf': options.pbfAlias}, opts.prefix);
+      info.tiles = utils.getTileUrls(req, info.tiles, path, info.format, {'pbf': options.pbfAlias}, opts.prefix, opts.protocol);
       arr.push(info);
     });
     return arr;
@@ -237,7 +236,7 @@ function start(opts) {
     if (address.indexOf('::') === 0) {
       address = '[' + address + ']'; // literal IPv6 address
     }
-    console.log('Listening at http://%s:%d/', address, this.address().port);
+    console.log('Listening at' + opts.protocol + '://%s:%d/', address, this.address().port);
 
     if (!!opts.prefix)
       console.log('Prefix: ', opts.prefix);

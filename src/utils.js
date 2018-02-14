@@ -6,13 +6,13 @@ var path = require('path'),
 var clone = require('clone'),
     glyphCompose = require('glyph-pbf-composite');
 
-module.exports.getTileUrls = function(req, domains, path, format, aliases, prefix) {
+module.exports.getTileUrls = function(req, domains, path, format, aliases, prefix, protocol) {
 
   if (domains) {
     if (domains.constructor === String && domains.length > 0) {
       domains = domains.split(',');
     }
-    var protocol = req.connection.encrypted ? 'https://' : 'http://';
+
     var host = req.headers.host;
     var hostParts = host.split('.');
     var relativeSubdomainsUsable = hostParts.length > 1 &&
@@ -52,9 +52,9 @@ module.exports.getTileUrls = function(req, domains, path, format, aliases, prefi
   var uris = [];
   domains.forEach(function(domain) {
     if (!!prefix) {
-      uris.push(protocol + domain + prefix + '/' + path + '/{z}/{x}/{y}.' + format + query);
+      uris.push(protocol + '://' + domain + prefix + '/' + path + '/{z}/{x}/{y}.' + format + query);
     } else {
-      uris.push(protocol + domain + '/' + path + '/{z}/{x}/{y}.' + format + query);
+      uris.push(protocol + '://' + domain + '/' + path + '/{z}/{x}/{y}.' + format + query);
     }
   });
 

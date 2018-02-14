@@ -7,7 +7,7 @@ var clone = require('clone'),
     express = require('express');
 
 
-module.exports = function(options, repo, params, id, reportTiles, reportFont, prefix) {
+module.exports = function(options, repo, params, id, reportTiles, reportFont, prefix, protocol) {
   var app = express().disable('x-powered-by');
 
   var styleFile = path.resolve(options.paths.styles, params.style);
@@ -63,7 +63,6 @@ module.exports = function(options, repo, params, id, reportTiles, reportFont, pr
   repo[id] = styleJSON;
 
   app.get('/' + id + '/style.json', function(req, res, next) {
-    var protocol = req.connection.encrypted ? 'https://' : 'http://';
     var fixUrl = function(url, opt_nokey, opt_nostyle) {
       if (!url || (typeof url !== 'string') || url.indexOf('local://') !== 0) {
         return url;
@@ -81,10 +80,10 @@ module.exports = function(options, repo, params, id, reportTiles, reportFont, pr
       }
 
       if (!!prefix) {
-          return url.replace('local://', protocol + req.headers.host + prefix + '/') + query;
+          return url.replace('local://', protocol + '://' + req.headers.host + prefix + '/') + query;
       }
 
-      return url.replace('local://', protocol + req.headers.host + '/') + query;
+      return url.replace('local://', protocol + '://' + req.headers.host + '/') + query;
     };
 
     var styleJSON_ = clone(styleJSON);
