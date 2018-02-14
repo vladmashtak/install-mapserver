@@ -161,6 +161,7 @@ function start(opts) {
   });
 
   router.get('/styles.json', function(req, res, next) {
+    var protocol = req.connection.encrypted ? 'https://' : 'http://';
     var result = [];
     var query = req.query.key ? ('?key=' + req.query.key) : '';
     Object.keys(serving.styles).forEach(function(id) {
@@ -168,9 +169,9 @@ function start(opts) {
           styleUrl;
 
         if (!!opts.prefix ) {
-          styleUrl = req.protocol + '://' + req.headers.host + opts.prefix + '/styles/' + id + '/style.json' + query;
+          styleUrl = protocol + req.headers.host + opts.prefix + '/styles/' + id + '/style.json' + query;
         } else {
-          styleUrl = req.protocol + '://' + req.headers.host + '/styles/' + id + '/style.json' + query;
+          styleUrl = protocol + req.headers.host + '/styles/' + id + '/style.json' + query;
         }
 
       result.push({

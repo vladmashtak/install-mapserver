@@ -63,6 +63,7 @@ module.exports = function(options, repo, params, id, reportTiles, reportFont, pr
   repo[id] = styleJSON;
 
   app.get('/' + id + '/style.json', function(req, res, next) {
+    var protocol = req.connection.encrypted ? 'https://' : 'http://';
     var fixUrl = function(url, opt_nokey, opt_nostyle) {
       if (!url || (typeof url !== 'string') || url.indexOf('local://') !== 0) {
         return url;
@@ -80,10 +81,10 @@ module.exports = function(options, repo, params, id, reportTiles, reportFont, pr
       }
 
       if (!!prefix) {
-          return url.replace('local://', req.protocol + '://' + req.headers.host + prefix + '/') + query;
+          return url.replace('local://', protocol + req.headers.host + prefix + '/') + query;
       }
 
-      return url.replace('local://', req.protocol + '://' + req.headers.host + '/') + query;
+      return url.replace('local://', protocol + req.headers.host + '/') + query;
     };
 
     var styleJSON_ = clone(styleJSON);

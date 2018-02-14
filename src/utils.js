@@ -12,6 +12,7 @@ module.exports.getTileUrls = function(req, domains, path, format, aliases, prefi
     if (domains.constructor === String && domains.length > 0) {
       domains = domains.split(',');
     }
+    var protocol = req.connection.encrypted ? 'https://' : 'http://';
     var host = req.headers.host;
     var hostParts = host.split('.');
     var relativeSubdomainsUsable = hostParts.length > 1 &&
@@ -51,9 +52,9 @@ module.exports.getTileUrls = function(req, domains, path, format, aliases, prefi
   var uris = [];
   domains.forEach(function(domain) {
     if (!!prefix) {
-      uris.push(req.protocol + '://' + domain + prefix + '/' + path + '/{z}/{x}/{y}.' + format + query);
+      uris.push(protocol + domain + prefix + '/' + path + '/{z}/{x}/{y}.' + format + query);
     } else {
-      uris.push(req.protocol + '://' + domain + '/' + path + '/{z}/{x}/{y}.' + format + query);
+      uris.push(protocol + domain + '/' + path + '/{z}/{x}/{y}.' + format + query);
     }
   });
 
