@@ -14,9 +14,9 @@ Download map form [openmaptiles.com](https://openmaptiles.com/downloads/planet/)
 
 ## Create tileserver service:
 
-`map=...` and `port=...` `prefix=...` is required!
+`map=...` and `port=...` `prefix=...` `protocol=(http/https)`is required!
 
-`make map=example_map.mbtiles port=9000 tileserver.service`
+`make map=example_map.mbtiles port=9000 prefix=map protocol=https tileserver.service`
 
 ## Tile service
 
