@@ -60,7 +60,7 @@ var startServer = function(configPath, config) {
     config: config,
     bind: opts.bind,
     port: opts.port,
-    prefix: opts.prefix
+    prefix: !!opts.prefix ? '/' + opts.prefix : opts.prefix
   });
 };
 
